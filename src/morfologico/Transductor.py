@@ -84,7 +84,7 @@ def define_verb(lema: str) -> str:
             return word
     return word
 
-archivo = open("palabras.txt")
+archivo = open("../../data/palabras.txt")
 lineas = archivo.readlines()
 print("Clasificando verbos: ")
 for linea in lineas:
