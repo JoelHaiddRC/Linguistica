@@ -1,7 +1,7 @@
 import re
 
 mapeo_acentos = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u'}
-signos_puntuacion = "!”#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
+#signos_puntuacion = "¿¡!”#$%&'()*+,-./:;<=>?@[<\\]^_`{|}~"
 
 
 def eliminar_stopwords(palabras: list, stopwords: list) -> list:
@@ -19,10 +19,9 @@ def remover_puntuacion(palabras: list) -> list:
     """
         Elimina los signos de puntuacion definidos en la lista
     """
-    regex = re.compile("[" + signos_puntuacion + "]")
-    return [re.sub(regex, "", palabra) for palabra in palabras]
-
-
+    regex = r'[^a-z0-9ñáéíóúü]+'
+    tokens = [re.sub(regex, '', palabra) for palabra in palabras]
+    return [token for token in tokens if token]
 
 def pasar_a_minusculas(palabras: list) -> list:
     """
@@ -58,5 +57,5 @@ def pre_procesar(palabras: list, stopwords: list) -> list:
     """
     texto = pasar_a_minusculas(palabras)
     texto = remover_puntuacion(texto)
-    texto = remover_acentos(texto)
-    return eliminar_stopwords(texto, stopwords)
+    texto = eliminar_stopwords(texto, stopwords)
+    return remover_acentos(texto)
