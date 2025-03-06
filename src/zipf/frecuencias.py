@@ -19,6 +19,3 @@ def crear_tabla_frecuencias(tokens: Counter) -> pd.DataFrame:
     tabla_datos.rename(columns={'index': 'palabra'}, inplace=True)
     return tabla_datos
 
-def crear_tabla_frecuencias(palabras: Counter) -> pd.DataFrame:
-    num_tipos = len(palabras)
-    return [_[1] for _ in palabras.most_common(num_tipos)]
