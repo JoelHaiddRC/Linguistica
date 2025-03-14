@@ -9,13 +9,13 @@ def define_verb(lema: str) -> str:
     # o -> PRES/IND-1S
     # as -> PRES/IND-2S
     # a -> PRES/IND-3S
-    # amos -> PRES/IND-1P/PRET/IND-1P 
+    # amos -> PRES/IND-1P|PRET/IND-1P 
     # an -> PRES/IND-2P
 
     #Copretérito
-    # aba -> COP/IND-1S/COP/IND-3S
+    # aba -> COP/IND-1S|COP/IND-3S
     # abas -> COP/IND-2S
-    # aba -> COP/IND-3S/COP/IND-1S
+    # aba -> COP/IND-3S|COP/IND-1S
     # ábamos -> COP/IND-1P
     # aban -> COP/IND-2P
 
@@ -23,7 +23,7 @@ def define_verb(lema: str) -> str:
     # é -> PRET/IND-1S
     # aste -> PRET/IND-2S
     # ó -> PRET/IND-3S
-    # amos -> PRET/IND-1P/PRES/IND-1P
+    # amos -> PRET/IND-1P|PRES/IND-1P
     # aron -> PRET/IND-2P
 
     #Futuro
