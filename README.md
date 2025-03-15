@@ -9,7 +9,11 @@ Es necesario tener instalado python3 y un entorno con terminal donde poder ejecu
 
 Además se deben instalar a traves de pip los siguientes paquetes:
 
-```pip install <nombre_paquete>```
+```pip install pandas```
+```pip install numpy```
+```pip install matplotlib.pyplot```
+```pip install scipy```
+
 
 Instrucciones:
 
