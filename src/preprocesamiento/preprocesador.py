@@ -54,14 +54,24 @@ def remover_acentos_palabra(palabra: str) -> str:
     return ''.join([mapeo_acentos[letra] if letra in mapeo_acentos else letra for letra in palabra])
 
 
-def remover_secuencia_asterisco(palabras: list) -> list:
+def remover_secuencia_cero(palabras: list) -> list:
     """
     En nuestro corpus a analizar, se identifica la cadena *0*. Eliminamos esta cadena de nuestro analisis
-    :param palabras: La lista de palabras (tokens) a la que se va a *0*
-    :return: Una lista con los tokens sin el token *0*
+    :param palabras: La lista de palabras (tokens) a la que se va a eliminar las cadenas mencionadas
+    :return: Una lista con los tokens sin el tokens mencionados
     """
-    tokens = [palabra.replace("*0*", "")  for palabra in palabras]
-    return [token for token in tokens if token]
+    cess_words = ["*0*"]
+    return [x for x in palabras if x not in cess_words]
+
+def remover_secuencia_f(palabras: list) -> list:
+    """
+    En nuestro corpus a analizar, se identifica la cadena fpt y fpa. Eliminamos esta cadena de nuestro analisis
+    :param palabras: La lista de palabras (tokens) a la que se va a eliminar las cadenas mencionadas
+    :return: Una lista con los tokens sin el tokens mencionados
+    """
+    cess_words = ["fpa", "fpt"]
+    return [x for x in palabras if x not in cess_words]
+
 
 def pre_procesar(palabras: list, stopwords: list) -> list:
     """
@@ -72,7 +82,8 @@ def pre_procesar(palabras: list, stopwords: list) -> list:
     :return: La lista de palabras (tokens) con el procesamiento aplicado
     """
     texto = pasar_a_minusculas(palabras)
-    texto = remover_secuencia_asterisco(texto)
+    texto = remover_secuencia_cero(texto)
     texto = remover_puntuacion(texto)
+    texto = remover_secuencia_f(texto)
     texto = eliminar_stopwords(texto, stopwords)
     return remover_acentos(texto)

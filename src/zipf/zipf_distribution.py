@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from nest_asyncio import apply
 from scipy.optimize import minimize
 
 
