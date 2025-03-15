@@ -1,8 +1,6 @@
 import re
 
 mapeo_acentos = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u'}
-#signos_puntuacion = "¿¡!”#$%&'()*+,-./:;<=>?@[<\\]^_`{|}~"
-
 
 def eliminar_stopwords(palabras: list, stopwords: list) -> list:
     """
@@ -56,6 +54,15 @@ def remover_acentos_palabra(palabra: str) -> str:
     return ''.join([mapeo_acentos[letra] if letra in mapeo_acentos else letra for letra in palabra])
 
 
+def remover_secuencia_asterisco(palabras: list) -> list:
+    """
+    En nuestro corpus a analizar, se identifica la cadena *0*. Eliminamos esta cadena de nuestro analisis
+    :param palabras: La lista de palabras (tokens) a la que se va a *0*
+    :return: Una lista con los tokens sin el token *0*
+    """
+    tokens = [palabra.replace("*0*", "")  for palabra in palabras]
+    return [token for token in tokens if token]
+
 def pre_procesar(palabras: list, stopwords: list) -> list:
     """
     Aplica un preprocesamiento general a una lista con palabras (tokens).
@@ -65,6 +72,7 @@ def pre_procesar(palabras: list, stopwords: list) -> list:
     :return: La lista de palabras (tokens) con el procesamiento aplicado
     """
     texto = pasar_a_minusculas(palabras)
+    texto = remover_secuencia_asterisco(texto)
     texto = remover_puntuacion(texto)
     texto = eliminar_stopwords(texto, stopwords)
     return remover_acentos(texto)
