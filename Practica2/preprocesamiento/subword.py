@@ -10,10 +10,12 @@ def iniciar_bpe(tokens:list)->list:
     :return: Un diccionario  cuyas llaves son los tokens dividos en letras y con valor la frecuencia del token
     """
     frecuencias = Counter()
+    nuevos_tokens = []
     for token in tokens:
         letras = ' '.join(token)
+        nuevos_tokens.append(letras)
         frecuencias[letras] += 1
-    return frecuencias
+    return [frecuencias, nuevos_tokens]
 
 
 def obtener_frec_subwords(frecuencias_tokens:Counter)-> Counter:
@@ -52,16 +54,18 @@ def aplicar_byte_pair_encoding(tokens:list, iteraciones: int) -> list:
     :param iteraciones: El numero de iteraciones de BPE
     :return: Un nuevo counter con las frecuencias de cada subword generado por BPE para nuestro corpus
     """
-    tokens_bpe = iniciar_bpe(tokens)
+    tokens_bpe, _tokens = iniciar_bpe(tokens)
     i = iteraciones
     while i > 0:
         candidatos_subword = obtener_frec_subwords(tokens_bpe)
         max_subword =  max(candidatos_subword, key=candidatos_subword.get)
         tokens_bpe = agregar_nueva_subword(tokens_bpe, max_subword)
+        _tokens = [token.replace(" ".join(max_subword), ''.join(max_subword)) for token in _tokens]
+        #reglas.add(''.join(max_subword))
         i -= 1
     frecs_nuevos_tokens = Counter()
     for token, freq in tokens_bpe.items():
         nuevos_tokens = token.split()
         for sub_token in nuevos_tokens:
             frecs_nuevos_tokens[sub_token] += freq
-    return frecs_nuevos_tokens
+    return [frecs_nuevos_tokens,_tokens]
