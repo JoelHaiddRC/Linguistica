@@ -35,18 +35,64 @@ palabras_a_indices = {"el" : 0, "niño" : 1, "perro" : 2, "juega" : 3, "salta" :
 indices_a_palabras = {0 : "el", 1 : "niño", 2 : "perro", 3 : "juega", 4 : "salta", 5 : BOS, 6 : EOS, 7: "UNKNOW"}
 bigramas = lista_bigramas(corpus, palabras_a_indices)
 
+#Inicializacion de variables
+np.random.seed(42)
+
+N = len(palabras_a_indices.keys())
+d = 2
+m = N
+taza_aprend = 0.1
+EPOCHS = 1000
+
+C = np.random.randn(d, N) / np.sqrt(N)
+W =  np.random.randn(m, d) / np.sqrt(d)
+b = np.random.randn(m) / np.sqrt(m)
+U = np.random.randn(N,m) / np.sqrt(m)
+c = np.random.randn(N) / np.sqrt(N)
+
 #NUEVO
+
+#Backward
+def backward(EPOCHS : int, W : np.array):
+    losses = []
+    for epoch in range(EPOCHS):
+        # Acumula el riesgo de la epoch
+        loss = 0
+        for bigrama in bigramas:
+            # Forward de entrenamiento
+            u_w = C.T[bigrama[0]]
+            # Salida
+            a = np.dot(W, u_w)
+            output = np.exp(a)
+
+            # Softmax
+            f = output / output.sum(0)
+            # Calcula loss por ejemplo
+            loss += -np.log(f)[bigrama[1]]
+
+            # Backpropagation
+            # Variable de salida
+            d_out = f
+            d_out[bigrama[1]] -= 1
+
+            # Variable de embedding
+            d_emb = np.dot(d_out, W)
+
+            # Actualizamos a la salida
+            W -= taza_aprend * np.outer(d_out, u_w)
+
+            # Actualizamos embedding
+            C.T[bigrama[0]] -= taza_aprend * d_emb
+        # Guardamos el loss
+        losses.append(loss)
+        print(f"Epoch {epoch}, loss: {loss}")
+
+
 #Forward
-def forward(ind_palabra : int, N : int, d : int, m : int, ind_objetivo : int, taza_aprend : int):
+def forward(ind_palabra : int, N : int):
     #Obtener one-hot
     one_hot = crear_one_hot(ind_palabra, N)
 
-    #Inicializacion
-    C = np.ones((d,N))
-    W =  np.ones((m,d))
-    b = np.ones((m))
-    U = np.ones((N,m))
-    c = np.ones((N))
 
     #Embedding
     Ci = np.dot(C,one_hot)
@@ -93,10 +139,12 @@ def forward(ind_palabra : int, N : int, d : int, m : int, ind_objetivo : int, ta
 
 
 
+backward(EPOCHS, W)
 #EJEMPLO
-N = len(palabras_a_indices.keys())
 for bigrama in bigramas:
     print("calculando probas para: " + str(bigrama[0]) + " = " + indices_a_palabras[bigrama[0]])
-    result = forward(bigrama[0], N, 2, 3, bigrama[1], 0.5)
-    print(list(palabras_a_indices.keys()))
-    print(result)
+    result = forward(bigrama[0], N)
+    pal = list(palabras_a_indices.keys())
+    for i in range(len(result)):
+        r = pal[i] + " = " + str(result[i])
+        print(r)
