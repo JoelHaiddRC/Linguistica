@@ -137,10 +137,14 @@ def forward(ind_palabra : int, N : int):
         C[ind_palabra, k] -= taza_aprend * np.dot(dc[k], one_hot)
     """
 
-
+def proba_bigrama(ind_palabra: int, ind_objetivo : int, N : int):
+    probas = forward(ind_palabra, N)
+    return probas[ind_objetivo]
+    
 
 backward(EPOCHS, W)
 #EJEMPLO
+"""
 for bigrama in bigramas:
     print("calculando probas para: " + str(bigrama[0]) + " = " + indices_a_palabras[bigrama[0]])
     result = forward(bigrama[0], N)
@@ -148,3 +152,17 @@ for bigrama in bigramas:
     for i in range(len(result)):
         r = pal[i] + " = " + str(result[i])
         print(r)
+"""
+#Perplejidad
+def get_perplexity(corpus_eval : list, palabras_a_ind : dict):
+    bigramas = lista_bigramas(corpus_eval, palabras_a_ind)
+    probas = 0
+    for bigrama in bigramas:
+        if(probas != 0):
+            probas *= 1/proba_bigrama(bigrama[0], bigrama[1], N)
+        else:
+            probas = 1/proba_bigrama(bigrama[0], bigrama[1], N)
+    return probas ** (1/(len(corpus_eval)-2))
+
+evaluacion = [BOS, "el", "niño", "perro", EOS]
+print(get_perplexity(evaluacion, palabras_a_indices))
