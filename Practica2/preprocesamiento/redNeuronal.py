@@ -42,7 +42,7 @@ N = len(palabras_a_indices.keys())
 d = 2
 m = N
 taza_aprend = 0.1
-EPOCHS = 1000
+EPOCHS = 100
 
 C = np.random.randn(d, N) / np.sqrt(N)
 W =  np.random.randn(m, d) / np.sqrt(d)
@@ -53,20 +53,40 @@ c = np.random.randn(N) / np.sqrt(N)
 #NUEVO
 
 #Backward
-def backward(EPOCHS : int, W : np.array):
+def backward(EPOCHS : int, U : np.array, W : np.array, C : np.array, c : np.array, b : np.array):
     losses = []
     for epoch in range(EPOCHS):
         # Acumula el riesgo de la epoch
         loss = 0
         for bigrama in bigramas:
             # Forward de entrenamiento
-            u_w = C.T[bigrama[0]]
-            # Salida
-            a = np.dot(W, u_w)
-            output = np.exp(a)
+            #u_w = C.T[bigrama[0]]
+            ## Salida
+            #a = np.dot(W, u_w)
+            #output = np.exp(a)
+#
+            ## Softmax
+            #f = output / output.sum(0)
+            #Obtener one-hot
+            one_hot = crear_one_hot(bigrama[0], N)
 
-            # Softmax
-            f = output / output.sum(0)
+            #Embedding
+            Ci = np.dot(C,one_hot)
+
+            #Capa oculta
+            WCi = np.dot(W, Ci)
+            tanh = np.vectorize(lambda x: math.tanh(x))
+            hi = tanh(WCi + b)
+            #Pre-activacion
+            ai = np.dot(U, hi) + c
+
+            #activacion
+            f = []
+            npexp = np.vectorize(lambda x: math.exp(x))
+            expai = npexp(ai) 
+            for aj in ai:
+                f.append(math.exp(aj) / expai.sum())
+                
             # Calcula loss por ejemplo
             loss += -np.log(f)[bigrama[1]]
 
@@ -75,14 +95,21 @@ def backward(EPOCHS : int, W : np.array):
             d_out = f
             d_out[bigrama[1]] -= 1
 
-            # Variable de embedding
-            d_emb = np.dot(d_out, W)
+            U -= (taza_aprend * np.outer(d_out, hi))
 
-            # Actualizamos a la salida
-            W -= taza_aprend * np.outer(d_out, u_w)
+            for i in range(len(b)):
+                b[i] -= taza_aprend * d_out[i]
+            
+        
+            dh = np.dot(d_out, U) * (1-(hi**2))
+            W -= (taza_aprend * np.outer(dh, Ci))
 
-            # Actualizamos embedding
-            C.T[bigrama[0]] -= taza_aprend * d_emb
+            for i in range(len(c)):
+                c[i] -= taza_aprend * dh[i]
+
+            dc = np.dot(dh, W)
+            C -= (taza_aprend * np.outer(dc, one_hot))
+
         # Guardamos el loss
         losses.append(loss)
         print(f"Epoch {epoch}, loss: {loss}")
@@ -142,9 +169,9 @@ def proba_bigrama(ind_palabra: int, ind_objetivo : int, N : int):
     return probas[ind_objetivo]
     
 
-backward(EPOCHS, W)
+backward(EPOCHS, U, W, C, c, b)
 #EJEMPLO
-"""
+
 for bigrama in bigramas:
     print("calculando probas para: " + str(bigrama[0]) + " = " + indices_a_palabras[bigrama[0]])
     result = forward(bigrama[0], N)
@@ -166,3 +193,4 @@ def get_perplexity(corpus_eval : list, palabras_a_ind : dict):
 
 evaluacion = [BOS, "el", "niño", "perro", EOS]
 print(get_perplexity(evaluacion, palabras_a_indices))
+"""
