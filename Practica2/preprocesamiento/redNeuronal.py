@@ -1,5 +1,7 @@
 import numpy as np
 import math   
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 #EJEMPLO
 BOS = "<BOS>"
@@ -41,7 +43,7 @@ np.random.seed(42)
 N = len(palabras_a_indices.keys())
 d = 2
 m = N
-taza_aprend = 0.1
+taza_aprend = 0.05
 EPOCHS = 100
 
 C = np.random.randn(d, N) / np.sqrt(N)
@@ -52,74 +54,74 @@ c = np.random.randn(N) / np.sqrt(N)
 
 #NUEVO
 
-#Backward
-def backward(EPOCHS : int, U : np.array, W : np.array, C : np.array, c : np.array, b : np.array):
-    losses = []
-    for epoch in range(EPOCHS):
-        # Acumula el riesgo de la epoch
-        loss = 0
-        for bigrama in bigramas:
-            # Forward de entrenamiento
-            #u_w = C.T[bigrama[0]]
-            ## Salida
-            #a = np.dot(W, u_w)
-            #output = np.exp(a)
-#
-            ## Softmax
-            #f = output / output.sum(0)
-            #Obtener one-hot
-            one_hot = crear_one_hot(bigrama[0], N)
+C_old = np.copy(C)
+W_old = np.copy(W)
+b_old = np.copy(b)
+U_old = np.copy(U)
+c_old = np.copy(c)
 
-            #Embedding
-            Ci = np.dot(C,one_hot)
+losses = []
+for epoch in range(EPOCHS):
+    # Acumula el riesgo de la epoch
+    loss = 0
+    for bigrama in bigramas:
+        # Forward de entrenamiento
+        #u_w = C.T[bigrama[0]]
+        ## Salida
+        #a = np.dot(W, u_w)
+        #output = np.exp(a)
 
-            #Capa oculta
-            WCi = np.dot(W, Ci)
-            tanh = np.vectorize(lambda x: math.tanh(x))
-            hi = tanh(WCi + b)
-            #Pre-activacion
-            ai = np.dot(U, hi) + c
+        ## Softmax
+        #f = output / output.sum(0)
+        
+        #Obtener one-hot
+        one_hot = crear_one_hot(bigrama[0], N)
+        
+        #Embedding
+        Ci = np.dot(C,one_hot)
 
-            #activacion
-            f = []
-            npexp = np.vectorize(lambda x: math.exp(x))
-            expai = npexp(ai) 
-            for aj in ai:
-                f.append(math.exp(aj) / expai.sum())
+        #Capa oculta
+        WCi = np.dot(W, Ci)
+        hi = np.tanh(WCi + b)
+
+        #Pre-activacion
+        ai = np.dot(U, hi) + c
+
+        #activacion
+        expai = np.exp(ai)
+        f =  expai / expai.sum(0)
                 
-            # Calcula loss por ejemplo
-            loss += -np.log(f)[bigrama[1]]
+        # Calcula loss por ejemplo
+        loss += -np.log(f)[bigrama[1]]
 
-            # Backpropagation
-            # Variable de salida
-            d_out = f
-            d_out[bigrama[1]] -= 1
+        # Backpropagation
+        # Variable de salida
+        d_out = f
+        d_out[bigrama[1]] -= 1
 
-            U -= (taza_aprend * np.outer(d_out, hi))
+        U -= (taza_aprend * np.outer(d_out, hi))
 
-            for i in range(len(b)):
-                b[i] -= taza_aprend * d_out[i]
+        for i in range(len(b)):
+            b[i] -= taza_aprend * d_out[i]
             
         
-            dh = np.dot(d_out, U) * (1-(hi**2))
-            W -= (taza_aprend * np.outer(dh, Ci))
+        dh = np.dot(d_out, U) * (1-(hi**2))
+        W -= (taza_aprend * np.outer(dh, Ci))
 
-            for i in range(len(c)):
-                c[i] -= taza_aprend * dh[i]
+        for i in range(len(c)):
+            c[i] -= taza_aprend * dh[i]
 
-            dc = np.dot(dh, W)
-            C -= (taza_aprend * np.outer(dc, one_hot))
+        dc = np.dot(dh, W)
+        C -= (taza_aprend * np.outer(dc, one_hot))
 
         # Guardamos el loss
-        losses.append(loss)
-        print(f"Epoch {epoch}, loss: {loss}")
-
+    losses.append(loss)
+    print(f"Epoch {epoch}, loss: {loss}")
 
 #Forward
 def forward(ind_palabra : int, N : int):
     #Obtener one-hot
     one_hot = crear_one_hot(ind_palabra, N)
-
 
     #Embedding
     Ci = np.dot(C,one_hot)
@@ -132,12 +134,9 @@ def forward(ind_palabra : int, N : int):
     ai = np.dot(U, hi) + c
 
     #activacion
-    probas = []
-    npexp = np.vectorize(lambda x: math.exp(x))
-    expai = npexp(ai) 
-    for aj in ai:
-        probas.append(math.exp(aj) / expai.sum())
-    return probas
+    expai = np.exp(ai)
+    salidas =  expai / expai.sum(0)
+    return salidas
     """
     #backwards
     #Capa de salida
@@ -167,21 +166,23 @@ def forward(ind_palabra : int, N : int):
 def proba_bigrama(ind_palabra: int, ind_objetivo : int, N : int):
     probas = forward(ind_palabra, N)
     return probas[ind_objetivo]
-    
 
-backward(EPOCHS, U, W, C, c, b)
 #EJEMPLO
 
-for bigrama in bigramas:
-    print("calculando probas para: " + str(bigrama[0]) + " = " + indices_a_palabras[bigrama[0]])
-    result = forward(bigrama[0], N)
-    pal = list(palabras_a_indices.keys())
+for palabra in palabras_a_indices.keys():
+    print("calculando probas para: " + palabra + " = " + str(palabras_a_indices[palabra]))
+    result = forward(palabras_a_indices[palabra], N)
+    suma = 0
+    lista_palabras = list(palabras_a_indices.keys())
+    s = ""
     for i in range(len(result)):
-        r = pal[i] + " = " + str(result[i])
-        print(r)
-"""
+        suma += result[i]
+        r = lista_palabras[i] + " = " + str(result[i]) + "; "
+        s += r
+    print(f"{s}\n suma: {suma}\n")
+
 #Perplejidad
-def get_perplexity(corpus_eval : list, palabras_a_ind : dict):
+def get_perplexity(corpus_eval : list, palabras_a_ind : dict) -> float:
     bigramas = lista_bigramas(corpus_eval, palabras_a_ind)
     probas = 0
     for bigrama in bigramas:
@@ -191,6 +192,36 @@ def get_perplexity(corpus_eval : list, palabras_a_ind : dict):
             probas = 1/proba_bigrama(bigrama[0], bigrama[1], N)
     return probas ** (1/(len(corpus_eval)-2))
 
-evaluacion = [BOS, "el", "niño", "perro", EOS]
-print(get_perplexity(evaluacion, palabras_a_indices))
-"""
+evaluacion = [BOS, "el", "niño", "salta", EOS]
+perplejidad = get_perplexity(evaluacion, palabras_a_indices)
+print(f"Perplejidad de la oración 'El niño salta': {perplejidad}")
+
+
+def generate_words(palabras_a_ind: dict, ind_a_palabras: dict, longitud: int) -> str:
+    oracion = ""
+    ultima = BOS
+    for i in range(longitud):
+        result = forward(palabras_a_ind[ultima], N)
+        indice = list(result).index(max(result))
+        siguiente = ind_a_palabras[indice]
+        if(siguiente == EOS):
+            oracion += ". "
+        elif(siguiente != BOS):
+            oracion += f"{siguiente} "
+        ultima = siguiente
+    return oracion
+print("Generando oracion: ")
+print(generate_words(palabras_a_indices, indices_a_palabras, 10))
+
+
+def plot_words(Z, ids):
+    Z = PCA(2).fit_transform(Z)
+    r=0
+    plt.scatter(Z[:,0],Z[:,1], marker='o', c='teal')
+    for label,x,y in zip(ids, Z[:,0], Z[:,1]):
+        plt.annotate(label, xy=(x,y), xytext=(-1,1), textcoords='offset points', ha='center', va='bottom')
+        r+=1
+
+plot_words(C.T, list(palabras_a_indices.keys()))
+plt.title('Embeddings')
+plt.show()
