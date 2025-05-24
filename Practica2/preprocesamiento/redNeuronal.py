@@ -11,12 +11,6 @@ corpus = [BOS, "el", "niño", "juega",EOS,
           BOS, "el", "perro", "juega", EOS,
           BOS, "el", "perro", "salta", EOS]
 
-#NUEVO:
-def crear_one_hot(ind : int, size : int) -> list:
-    onehot = np.zeros(size)
-    onehot[ind] = 1
-    return onehot
-
 #VIEJO
 def lista_bigramas(corpus:list, palabras_a_indices:dict) -> list:
     bigramas = []
@@ -74,11 +68,10 @@ for epoch in range(EPOCHS):
         ## Softmax
         #f = output / output.sum(0)
         
-        #Obtener one-hot
-        one_hot = crear_one_hot(bigrama[0], N)
+        #Obtener one-ho
         
         #Embedding
-        Ci = np.dot(C,one_hot)
+        Ci = C.T[bigrama[0]]
 
         #Capa oculta
         WCi = np.dot(W, Ci)
@@ -101,18 +94,15 @@ for epoch in range(EPOCHS):
 
         U -= (taza_aprend * np.outer(d_out, hi))
 
-        for i in range(len(b)):
-            b[i] -= taza_aprend * d_out[i]
+        b -= taza_aprend * d_out
             
-        
         dh = np.dot(d_out, U) * (1-(hi**2))
         W -= (taza_aprend * np.outer(dh, Ci))
 
-        for i in range(len(c)):
-            c[i] -= taza_aprend * dh[i]
+        c -= taza_aprend * d_out
 
         dc = np.dot(dh, W)
-        C -= (taza_aprend * np.outer(dc, one_hot))
+        C.T[bigrama[0]] -= (taza_aprend * dc)
 
         # Guardamos el loss
     losses.append(loss)
@@ -120,11 +110,8 @@ for epoch in range(EPOCHS):
 
 #Forward
 def forward(ind_palabra : int, N : int):
-    #Obtener one-hot
-    one_hot = crear_one_hot(ind_palabra, N)
-
     #Embedding
-    Ci = np.dot(C,one_hot)
+    Ci = C.T[ind_palabra]
     
     #Capa oculta
     WCi = np.dot(W, Ci)
