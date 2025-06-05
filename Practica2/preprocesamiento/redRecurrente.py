@@ -1,5 +1,6 @@
 import numpy as np
-import math   
+import math
+import random
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import torch    
@@ -58,48 +59,53 @@ class RecurrentNetwork(nn.Module):
         super().__init__()
         #Capa de embedding
         self.emb = nn.Embedding(dim_in,dim)
-        #Capa de RNN (se toma bidireccional)
+        #Capa de RNN (bidireccional)
         self.recurrence = nn.RNN(dim, dim_h, bidirectional=True)
+        #Capa lineal
+        lineal = nn.Linear(2*dim_h,dim_out)
+        #Activacion
+        pre = nn.Softmax(dim=2)
         #Salida
-        self.ffw = nn.Sequential(nn.Linear(2*dim_h,dim_out), nn.Softmax(dim=2))
+        self.ffw = nn.Sequential(lineal, pre)
         
     def forward(self, x):
-        #Se pasa a formato torch
+        #Se convierte en tensor
         x = torch.tensor(x)
         #Embedding
         x = self.emb(x)
-        #Ajustes de tamaño
         x = x.unsqueeze(1)
-        #Estados de recurrencia
+        #Capas recurrentes
         h, c = self.recurrence(x)
         #Activación
         h = h.tanh()
         #Salida
         y_pred = self.ffw(h)
-        #Se acomoda la salida para que la tome el loss
         y_pred = y_pred.transpose(1, 2)
-        
         return y_pred
     
+#Se crea la red recurrente
+#Numero de iteraciones
+EPOCHS = 100
+#Taza de aprendizaje
+LEARNING_RATE = 0.02
+#Dimension
+dim = 2
+
 rnn = RecurrentNetwork(len(indices_a_palabras.keys()), len(indices_a_palabras.keys()))
 
-#EJEMPLO
-#Numero de iteraciones
-epochs = 100
-#La función de riesgo es la entropía cruzada
+#Se define la función de riesgo y el optimizador
 criterion = torch.nn.CrossEntropyLoss()
-#Los parametros que se van a actualizar
-optimizer = torch.optim.Adagrad(rnn.parameters(), lr=0.02)
+optimizer = torch.optim.Adagrad(rnn.parameters(), LEARNING_RATE)
 
 #Se entrena el modelo
-for epoch in range(epochs):
+for epoch in range(EPOCHS):
     for x_i, y_i in zip(x, y):
-        #FORWARD
+        #Forward
         y_pred = rnn(x_i)
 
-        #BACKWARD
-        #Resize de las variables esperadas (se agrega dimension de length_seq)
+        #Backward
         y_i = (torch.tensor(y_i)).unsqueeze(1)
+
         #Se calcula el eror
         loss = criterion(y_pred, y_i)
 
@@ -107,27 +113,95 @@ for epoch in range(epochs):
         optimizer.zero_grad()
         #Backprop
         loss.backward()
-        #Se actualizan los parametros
+        #Actualizar parametros
         optimizer.step()
 
     print(f"Epoch={epoch}. Training loss={loss}")
 
-output = rnn([5, 0, 1, 3])
 
-print(output)
-
-probas = []
-"""
-for i in range(len(indices_a_palabras.keys())):
-    indices = list(indices_a_palabras.keys())
-    palabra = indices_a_palabras[indices[i]]
-    valor = output[i].item()
-    #print(f"{palabra} = {valor}")
-    probas.append((palabra, valor))
-
-def get_proba(tupla):
+def get_valor(tupla):
     return tupla[1]
 
-probas.sort(key=get_proba, reverse=True)
-print(probas)
+def get_proba(corpus_eval : list, palabras_a_ind : dict, sort_func) -> list:
+    probas = []
+    ind_corpus = [palabras_a_ind[w] for w in corpus_eval]
+    output = rnn(ind_corpus)
+    for i in range(len(corpus_eval)):
+        renglon = []
+        for j in range(len(palabras_a_ind.keys())):
+            palabras = list(palabras_a_ind.keys())
+            valor = output[i][j].item()
+            renglon.append((palabras[j], valor, j))
+        renglon.sort(key=sort_func, reverse=True)
+        probas.append(renglon)
+    return probas
+
+
+prueba = [BOS, "el", "niño", "salta", EOS]
+probas = get_proba(prueba, palabras_a_indices, get_valor)
 """
+for p in range(len(probas)):
+    print(f"Probas para {prueba[p]}")
+    for proba in probas[p]:
+        print(proba)
+    print("")
+ """       
+
+
+#Perplejidad
+def get_perplexity(corpus_eval : list, palabras_a_ind : dict) -> float:
+    perplexity = 0
+    indices_corpus = []
+    for token in corpus_eval:
+        if token in palabras_a_ind.keys():
+            indices_corpus.append(palabras_a_ind[token])
+        else:
+            indices_corpus.append(palabras_a_ind["UNKNOW"])
+    output = rnn(indices_corpus)
+    probas = []
+    for i in range(len(output)-1):
+        probas.append(output[i][indices_corpus[i+1]].item())
+
+    for p in probas:
+        if(perplexity != 0):
+            perplexity != 1/p
+        else:
+            perplexity = 1/p
+    return perplexity ** (1/(len(corpus_eval)-2))
+
+evaluacion = [BOS, "perro", "niño", "jaja", EOS]
+perplejidad = get_perplexity(evaluacion, palabras_a_indices)
+print(f"Perplejidad de la oración 'El niño salta': {perplejidad}")
+
+def generate_words(palabras_a_ind: dict, longitud: int) -> str:
+    oracion = ""
+    ultima = "<BOS>"
+    for i in range(longitud):
+        result = get_proba([ultima], palabras_a_ind, get_valor)
+        siguiente = "<UNK>"
+        ind = random.randint(0, 10)
+        while siguiente == "<UNK>": #Se vuelve a elegir si toca un UNK
+            siguiente = result[0][ind][0]
+            ind = random.randint(0, 10)
+        if(siguiente == "<EOS>"):
+            oracion += ". "
+        elif(siguiente != "<BOS>"):
+            oracion += f"{siguiente} "
+        ultima = siguiente
+    return oracion
+
+last_ind = len(list(indices_a_palabras.keys()))
+last_emb = torch.tensor(list(range(last_ind)))
+print(rnn.emb(last_emb).detach().numpy())
+
+#Obteniendo los embeddings
+def plot_words(Z, ids): 
+    r=0
+    plt.scatter(Z[:,0],Z[:,1], marker='o', c='teal')
+    for label,x,y in zip(ids, Z[:,0], Z[:,1]):
+        plt.annotate(label, xy=(x,y), xytext=(-1,1), textcoords='offset points', ha='center', va='bottom')
+        r+=1
+
+plot_words(rnn.emb(last_emb).detach().numpy(), list(palabras_a_indices.keys()))
+plt.title('Embeddings')
+plt.show()

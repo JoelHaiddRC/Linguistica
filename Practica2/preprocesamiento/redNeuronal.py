@@ -203,11 +203,14 @@ print(generate_words(palabras_a_indices, indices_a_palabras, 10))
 
 def plot_words(Z, ids):
     Z = PCA(2).fit_transform(Z)
+    print(Z)
     r=0
     plt.scatter(Z[:,0],Z[:,1], marker='o', c='teal')
     for label,x,y in zip(ids, Z[:,0], Z[:,1]):
         plt.annotate(label, xy=(x,y), xytext=(-1,1), textcoords='offset points', ha='center', va='bottom')
         r+=1
+
+print(C.T)
 
 plot_words(C.T, list(palabras_a_indices.keys()))
 plt.title('Embeddings')
