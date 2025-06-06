@@ -10,10 +10,8 @@ def iniciar_bpe(tokens:list)->list:
     :return: Un diccionario  cuyas llaves son los tokens dividos en letras y con valor la frecuencia del token
     """
     frecuencias = Counter()
-    #nuevos_tokens = []
     for token in tokens:
         letras = ' '.join(token)
-        #nuevos_tokens.append(letras)
         frecuencias[letras] += 1
     return frecuencias
 
@@ -61,7 +59,6 @@ def entrenar_byte_pair_encoding(tokens:list, iteraciones: int) -> list:
         candidatos_subword = obtener_frec_subwords(tokens_bpe)
         max_subword =  max(candidatos_subword, key=candidatos_subword.get)
         tokens_bpe = agregar_nueva_subword(tokens_bpe, max_subword)
-        #_tokens = [token.replace(" ".join(max_subword), ''.join(max_subword)) for token in _tokens]
         reglas.append(max_subword)
         i -= 1
     frecs_nuevos_tokens = Counter()
@@ -73,11 +70,22 @@ def entrenar_byte_pair_encoding(tokens:list, iteraciones: int) -> list:
 
 
 def aplicar_bpe(palabras:list, reglas:list) -> list:
+    """
+    Aplica el algoritmo BPE a una lista de palabras separándolas según las reglas.
+    :param palabras: Las palabras a las que se aplicará BPE
+    :param reglas: Las reglas que se usarán para separar las palabras en subwords.
+    :return: Una lista de las subwords generadas por el algoritmo BPE
+    """
     palabras_sep = [' '.join(palabra) for palabra in palabras]
     oracion_tokens = [aplicar_reglas(palabra, reglas) for palabra in palabras_sep]
     return [x for xs in oracion_tokens for x in xs]
 
 def aplicar_reglas(palabra:str, reglas:list) -> list:
+    """
+    :param palabras: La palabra que se separará
+    :param reglas: Las reglas que se usarán para reemplazar la palabra en subwords.
+    :return: La palabra separada en subwords
+    """
     for regla in reglas:
         palabra = palabra.replace(" ".join(regla), ''.join(regla))
     return palabra.split()
