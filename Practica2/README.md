@@ -24,4 +24,4 @@ Instrucciones:
 
 - Solamente se deben ejecutar los archivos ```Ejercicio1.ipynb``` y ```Ejercicio2.ipynb```, el resto de archivos son los diferentes módulos que usan los dos notebooks anteriores para poder funcionar.
 
-- Además de lo anterior se incluye un par de archivos extra llamados ```redNeuronal.py``` y ```redRecurrente``` para probar el funcionamiento de los modelos con un mini corpus.
+- Además de lo anterior se incluye un par de archivos extra llamados ```redNeuronal.py``` y ```redRecurrente``` para probar el funcionamiento de los modelos con un corpus pequeño sin usar BPE ni preprocesamiento.
