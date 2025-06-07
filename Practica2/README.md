@@ -5,6 +5,9 @@
 En esta práctica se implementan un par de redes neuronales, una con el modelo de bigramas usando únicamente numpy, y otra con el modelo recurrente usando pytorch.
 Se selecciona un corpus de al menos 1000 oraciones, se preprocesa, normaliza y se ejecuta el BPE para obtener los tókens de los cuáles se hará el entrenamiento.
 
+## Repositorio en github:
+```https://github.com/JoelHaiddRC/Linguistica```
+
 IMPORTANTE:
 Es necesario tener instalado python3 y un entorno con terminal donde poder ejecutar archivos ```ipynb```.
 
