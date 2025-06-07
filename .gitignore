@@ -172,3 +172,4 @@ cython_debug/
 
 ## IDE JetBrains
 .idea/
+datos_nltk/
